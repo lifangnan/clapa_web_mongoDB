@@ -1,0 +1,93 @@
+<!doctype html>
+<html>
+    <head><title>clapa Archiver</title></head>
+<body>
+    <h1>Configuration List</h1>
+<ol id="configuration_list">
+    {% for config in configs %}
+    <li class="{{config._id}}">
+        <ul>
+        {% for key in config.keys() %}
+        <li>{{key}}: <input id="{{key}}" type="text" value="{{config[key]}}" style="width: 50%;"></li>
+        {% endfor %}
+        </ul>
+    </li>
+    <button class="upload_btn" id="{{config._id}}">上传修改</button>
+    <HR></HR>
+    {% endfor %}
+</ol>
+
+<button id="insert_config">插入新的配置表</button>
+
+<p><a href="/">Back to List</a></p>
+
+
+<script type="text/javascript" src="static/js/jquery-3.6.0.js"></script>
+<script type="text/javascript">
+    $(function(){
+        $(document).on('click', ".upload_btn", function(){
+            // 当前按钮的id即为对应配置文档的objectid
+            var object_id = this.id; 
+            var _id = '', modified_time = '';
+            var triger_sources, pv_list, ui_port, archiver_port;
+            var num_input = $("."+object_id+" input").length;
+            for(var j=0; j<num_input; j++){
+                // 获取当前input框对象
+                var $temp_input = $("."+object_id+" input:eq("+ j +")");
+                var input_value = $temp_input.val();
+                switch($temp_input.attr('id')){
+                    case "_id":
+                        _id = input_value;
+                        break;
+                    case "modified_time":
+                        modified_time = input_value;
+                        break;
+                    case "triger_sources":
+                        triger_sources = input_value;
+                        break;
+                    case "pv_list":
+                        pv_list = input_value;
+                        break;
+                    case "ui_port":
+                        ui_port = input_value;
+                        break;
+                    case "archiver_port":
+                        archiver_port = input_value;
+                        break;
+                }   
+            }
+            // 发送post请求
+            $.post("/configuration/update", { "_id": _id,
+                                            "modified_time": modified_time,
+                                            "triger_sources": triger_sources,
+                                            "pv_list": pv_list,
+                                            "ui_port": ui_port,
+                                            "archiver_port": archiver_port},
+                function(data){
+                    if(data == "success"){
+                        alert("成功更新配置文件");
+                    }else{
+                        alert("更新似乎失败了，请稍后再试");
+                    }
+                });
+                
+        });
+
+
+        // 插入新的配置表按钮
+        $("#insert_config").on("click", function(){
+            var new_config = "<li class='newId'><ul>"
+                +"<li>triger_sources: <input id='triger_sources'' value='' type='text' style='width: 50%;'></li>"
+                +"<li>pv_list: <input id='pv_list'' type='text' value='' style='width: 50%;'></li>"
+                +"<li>ui_port: <input id='ui_port'' type='text' value='' style='width: 50%;'></li>"
+                +"<li>archiver_port: <input id='archiver_port'' value='' type='text' style='width: 50%;'></li>"
+                +"</ul></li>"
+                +"<button class='upload_btn' id='newId'>上传修改</button><HR></HR>"
+
+            $("#configuration_list").append(new_config);
+        });
+    });
+</script>
+
+</body>
+</html>

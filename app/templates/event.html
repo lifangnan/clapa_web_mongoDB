@@ -1,0 +1,84 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>clapa Archiver</title>
+</head>
+
+<body>
+    <h1>Event Detail</h1><h4 id='event_title' event_id="{{event['_id']}}">Title: {{event['title']}}</h4>
+    <!-- <h4>Description: {{event['description']}}</h4> -->
+    <h4>PV Data:</h4>
+
+    <table border = "3px">
+        <tr>
+            <th>PV name</th>
+            <th>VAL</th>
+            <th>DESC</th>
+        </tr>
+        {% for pv in event['pv_data'].keys() %}
+        <tr>
+            <td width='300px'>{{pv}}</td>
+            <td width='200px'>{{event['pv_data'][pv]['VAL']}}</td>
+            <td width='300px'>{{event['pv_data'][pv]['DESC']}}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+    <!-- <ul id="pv_list">
+        {% for pv in event['pv_data'].keys() %}
+        <li>{{pv}}: {{event['pv_data'][pv]['VAL']}}</li>
+        {% endfor %}
+    </ul> -->
+    <h4>Images:</h4>
+    <ul id="img_list">
+        {% for objectid in imgs.keys() %}
+        <li>{{objectid}}: <br>
+            <a href="/getImage/{{objectid}}" target="_blank">
+            <img width="400" align="top" src="/getImage/{{objectid}}"></a>
+        </li>
+        {% endfor %}
+    </ul>
+
+    <h4>Files:</h4>
+    <table id='file_table' border = "3px">
+        <tr>
+            <th>file id</th>
+            <th>file name</th>
+            <th>upload time</th>
+        </tr>
+    </table>
+
+
+    <p><a href="/">Back to List</a></p>
+
+    <!-- <button id="test">test</button> -->
+
+
+    <script type="text/javascript" src="../static/js/jquery-3.6.0.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            var event_id = $('#event_title').attr('event_id');
+            $.post("/getFilename", {"event_id": event_id},
+                function(json_data){
+                    for(var key in json_data){
+                        var a_row = "<tr><td width='300px'><a href='/getFile/"+ json_data[key]['file_id'] +"' target='_blank'>"+ json_data[key]['file_id'] +
+                                    "</a></td><td width='400px'>"+ json_data[key]['filename'] +
+                                    "</td><td width='300px'>"+ json_data[key]['uploadDate'] +
+                                    "</td></tr>";
+                        $('#file_table').append(a_row);  
+                    }
+                    
+                });
+            
+            $('#test').on('click', function(){
+                $.get('/getFile/617379320231f123350b620f', {}, function(data){
+                    console.log(data);
+                })
+            });
+        })
+    </script>
+
+</body>
+
+</html>

@@ -8,6 +8,7 @@ from bson.objectid import ObjectId
 import magic
 import datetime
 import io
+import copy
 
 
 app = Flask(__name__)
@@ -40,26 +41,36 @@ def get_event(id):
 def get_image(id):
     fs = gridfs.GridFS(db, 'img')
     img = fs.find_one({"_id": ObjectId(id)})
-    img2 = img
+    img2 = fs.find_one({"_id": ObjectId(id)})
+    # with open('test1.jpg','wb') as f:
+    #     f.write(img2.read())
+    # with open('test.jpg','wb') as f:
+    #     f.write(img.read())
     # 判断文件的MIME类型
     MIME_type = magic.from_buffer(img2.read(), mime=True) 
     # print("what is", MIME_type)
-    img_binary = io.BytesIO(img.read())
+    # img_binary = io.BytesIO(img.read())
+    
     return send_file(img, mimetype = MIME_type)
 
 
-# 未完成，返回文件接口有一些问题
+    fs = gridfs.GridFS(db, 'img')
+    img = fs.find_one({"_id": ObjectId(id)})
+
+# 文件接口，返回文件
 @app.route("/getFile/<id>")
 def get_file(id):
+    # return id
     fs = gridfs.GridFS(db, 'file')
     file = fs.find_one({"_id": ObjectId(id)})
-    
+    file2 = fs.find_one({"_id": ObjectId(id)})
+    # with open('test3.pdf','wb') as f:
+    #     f.write(file.read())
     if(file == None):
         return "No such file"
-    file2 = file # 复制一份用以判断类型
     MIME_type = magic.from_buffer(file2.read(), mime=True)
-    file_binary = io.BytesIO(file.read())
-    return send_file(file_binary, mimetype = MIME_type)
+    # return MIME_type
+    return send_file(file, mimetype = MIME_type)
 
 
 @app.route("/getFilename", methods=['GET', 'POST'])
@@ -133,5 +144,5 @@ def update_Configuration_document(_db, _objectId, _Triger_sources_list, _pv_list
     configuration_collection.update_one({"_id": ObjectId(_objectId)}, {"$set" :configuration_document})
 
 # 直接用python运行flask服务
-# app.run(debug=True ,port='5050')
+app.run(debug=True ,port='5050')
 

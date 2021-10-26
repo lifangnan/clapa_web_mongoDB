@@ -2,12 +2,19 @@
 <html>
 
 <head>
+    <link rel="stylesheet" type="text/css" href="../static/css/backgroud.css">
+
     <title>clapa Archiver</title>
 </head>
 
 <body>
     <h1>Event Detail</h1><h4 id='event_title' event_id="{{event['_id']}}">Title: {{event['title']}}</h4>
     <!-- <h4>Description: {{event['description']}}</h4> -->
+
+    <h4>时间戳：{{event['timestamp']}}</h4>
+
+    <h4>触发源：{{event['triger']}}</h4>
+
     <h4>PV Data:</h4>
 
     <table border = "3px">

@@ -1,15 +1,35 @@
 <!doctype html>
 <html>
-    <head><title>clapa Archiver</title></head>
+    <head>
+        <link rel="stylesheet" type="text/css" href="../static/css/backgroud.css">
+
+        <title>clapa Archiver</title>
+    </head>
 <body>
-    <h1>Event List</h1>
+    <h1>1. Event List</h1>
 <ul id="event_list">
     {% for ev in events %}
     <li><a href="/event/{{ev['_id']}}">{{ev['title']}}</a></li>
     {% endfor %}
 </ul>
 
-<h1><a href="/configuration">Configuration Setting</a></h1>
+<h1><a href="/configuration">2. Configuration Setting</a></h1>
+
+<h1><a href="/configuration">3. 下载所有实验相关文件：</a> <button id='download_files' style="width:100px; height:35px; font-size:large;">下载</button> </h1>
+
+
+<script type="text/javascript" src="../static/js/jquery-3.6.0.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            $('#download_files').on('click', function(){
+                // $.get('/downloadFiles', {}, function(data){
+                //     // console.log(data);
+                // })
+                window.open('/downloadFiles');
+
+            });
+        })
+    </script>
 
 </body>
 </html>

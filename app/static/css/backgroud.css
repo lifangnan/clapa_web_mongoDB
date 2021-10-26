@@ -1,0 +1,9 @@
+html,
+body {
+    height: 100%;
+    margin: 0;
+    padding-left: 10%;
+    padding-right: 10%;
+    padding-top: 30px;
+    background-color: #ccffff; 
+}

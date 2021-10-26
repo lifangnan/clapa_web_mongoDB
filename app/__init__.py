@@ -7,8 +7,10 @@ import gridfs
 from bson.objectid import ObjectId
 import magic
 import datetime
-import io
-import copy
+import os
+import shutil # 用于递归删除非空文件夹  
+import zipfile
+from io import BytesIO
 
 
 app = Flask(__name__)
@@ -115,6 +117,59 @@ def configuration_update():
         return "fail"
     return "success"
 
+
+# 下载数据库中所有文件，按event分为不同文件夹，返回zip压缩文件
+@app.route("/downloadFiles", methods=['GET'])
+def downloadFiles():
+    file_dir = "./app/static/experiment_data"
+    if os.path.exists(file_dir) == False:
+        os.mkdir(file_dir)
+    for ev in db['event'].find():
+
+        ev_dir = file_dir + '/' + ev['title']
+        # 如果已经存在该文件夹，则在后添加标号
+        if os.path.exists(ev_dir):
+            i = 1
+            while(True):
+                if os.path.exists(ev_dir + '(' + str(i) + ')'):
+                    i += 1
+                else:
+                    ev_dir += '(' + str(i) + ')'
+                    break
+        os.mkdir(ev_dir)
+
+        for file_id in ev['binary_data'].keys():
+            img_fs = gridfs.GridFS(db, 'img')
+            file_fs = gridfs.GridFS(db, 'file')
+            file = file_fs.find_one({"_id": ObjectId(file_id)})
+            if file == None: # 在文件GridFs中未找到该文件，则在图片GridFS中查找
+                file = img_fs.find_one({"_id": ObjectId(file_id)})
+            else:
+                file_info = db.file.files.find_one({'_id': ObjectId(file_id)})
+                if 'filename' in file_info.keys():
+                    filename = file_info['filename']
+                else:
+                    filename = file_id
+            if file == None:
+                continue
+                
+            with open(ev_dir + '/' + filename, 'wb') as f:
+                f.write(file.read())
+
+    # 压缩从服务器端临时保存的文件
+    with zipfile.ZipFile('./app/static/temporary_file.zip', mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+        for ev_name in os.listdir(file_dir):
+            if len( os.listdir(os.path.join(file_dir, ev_name)) ) == 0:
+                zf.write(os.path.join(file_dir, ev_name), arcname = ev_name)
+            for file_name in os.listdir(os.path.join(file_dir, ev_name)):
+                zf.write(os.path.join(file_dir, ev_name, file_name), arcname = os.path.join(ev_name, file_name))
+
+    # os.remove('./app/static/experiment_data.zip')
+    shutil.rmtree('./app/static/experiment_data') # 递归删除非空文件夹
+    return send_file(open('./app/static/temporary_file.zip', 'rb'), mimetype = 'application/zip', as_attachment=True, attachment_filename='experiment_data.zip')
+
+
+        
 
 ############ 分割线 ###################################################################################################################
 

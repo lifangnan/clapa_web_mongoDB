@@ -1,0 +1,29 @@
+<!doctype html>
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="../static/css/backgroud.css">
+
+    <title>clapa Archiver</title>
+</head>
+
+<body>
+    <h1>mongoDB下的所有图片来源</h1>
+
+    <ul id="source_list">
+        {% for source in source_list %}
+        <li><a href="/getAllimages/{{source}}" target="_blank">{{source}}</a></li>
+        {% endfor %}
+    </ul>
+
+
+    <p><a href="/">Back to List</a></p>
+
+    <!-- <button id="test">test</button> -->
+
+
+    <script type="text/javascript" src="../static/js/jquery-3.6.0.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+
+<head>
+    <link rel="stylesheet" type="text/css" href="../static/css/backgroud.css">
+    <style type='text/css'>
+    .cellDiv {
+        height:300px;
+        /*display:table-cell;*/
+        float:left;
+        /*display:inline-block;*/
+        border:1px solid orange;
+    } 
+    .cellDiv2
+		{
+			width:300px;
+			height:300px;
+			/*display:table-cell;*/
+			/*float:left;*/
+			display:inline-block;
+			/* border:1px solid orange; */
+		}
+    </style>
+    
+
+    <title>clapa Archiver</title>
+</head>
+
+<body>
+    <h1>图片来源：{{source}}</h1>
+
+        {% for filename in filenames %}
+        <div class="cellDiv2">
+            {{filename['filename']}}: <br>
+            <a href="/get_binary_images/{{source}}/{{filename['_id']}}/true" target="_blank">
+            <img width='80%' align="top" src="/get_binary_images/{{source}}/{{filename['_id']}}/false" source='{{source}}' file_id="{{filename['_id']}}"></a>
+        </div>
+        {% endfor %}
+
+
+
+    <p><a href="/imageSources">返回上一级</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<a href="/">返回主页</a></p>
+
+    <!-- <button id="test">test</button> -->
+
+
+    <script type="text/javascript" src="../static/js/jquery-3.6.0.js"></script>
+    <script type="text/javascript" src="../static/js/jquery_lazyload.js" ></script>
+    <script type="text/javascript">
+        $(function(){
+            // $('img').lazyload({ threshold : 200 }); 
+            var read_count = {}; 
+            $('img').on('error', function(){
+	if(read_count.hasOwnProperty($(this).attr('source') + '/' + $(this).attr('file_id'))){
+	    read_count[$(this).attr('source') + '/' + $(this).attr('file_id')] += 1;
+	}else{
+	    read_count[$(this).attr('source') + '/' + $(this).attr('file_id')] = 0;
+	}
+                // 每张图片最多尝试读十次，如果返回仍失败，则不再尝试
+                if(read_count[$(this).attr('source') + '/' + $(this).attr('file_id')] < 50){
+                    src_path = '/get_binary_images/' + $(this).attr('source') + '/' + $(this).attr('file_id') + '/false';
+                    console.log(read_count[$(this).attr('source') + '/' + $(this).attr('file_id')]);
+                    $(this).attr('src', src_path);
+                }           
+            }); 
+        })
+    </script>
+
+</body>
+
+</html>

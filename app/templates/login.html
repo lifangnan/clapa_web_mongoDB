@@ -1,0 +1,111 @@
+<!doctype html>
+<html>
+    <head>
+        <style type="text/css">
+            .login_box {
+                width: 450px;
+                height: 300px;
+                background-color: #ffffff;
+                border-radius: 3px;
+                position: absolute;
+                left: 50%;
+                top: 50%;
+                transform: translate(-50%,-50%);
+            }
+            
+            .image_box {
+                height: 130px;
+                width: 130px;
+                border: 1px solid #eee;
+                border-radius: 50%;
+                padding: 10px;
+                box-shadow: 0 0 10px #ddd;
+                position: absolute;
+                left:50%;
+                transform: translate(-50%, -50%);
+            }
+            
+            .image_box>img {
+                    width: 100%;
+                    height: 100%;
+                    border-radius: 50%;
+                    background-color: #eee;
+                    box-sizing: border-box;
+                }
+            
+            .login_form {
+                position: absolute;
+                bottom: 10;
+                width: 100%;
+                padding: 0 20px;
+                box-sizing: border-box;
+            }
+            
+            .login_input {
+                position: absolute;
+                /* top: 150px; */
+                width: 50%;
+                padding: 20px 20px;
+                top: 100px;
+                left: 80px;
+            }
+
+            .btns {
+                /* display: flex;
+                justify-content: center; */
+                position: absolute;
+                /* top: 150px; */
+                padding: 20px 20px;
+                top: 140px;
+                left: 180px;
+            }
+        </style>
+
+        <link rel="stylesheet" type="text/css" href="../static/css/backgroud.css">
+
+        <title>clapa Archiver</title>
+    </head>
+<body>
+
+<div class="login_container">
+    <div class="login_box">
+        <!-- 头像图标 -->
+        <div class="image_box">
+        <img src="../static/img/clapa_icon.jpg" alt="">
+        </div>
+        <!-- 登陆框 -->
+        <form class="login_form" label-width='40px'>
+            <!-- <form-item label="账号">
+                <input v-model="user"></input>
+            </form-item> -->
+            <form-item label="密码" class='login_input'>
+                密码：<input id='pwd_input' type="password"></input>
+            </form-item>
+            {% for message in get_flashed_messages() %}
+                <div class=flash>{{ message }}</div>
+            {% endfor %}
+            <form-item class="btns">
+                <button type="primary" id='login_button'>登陆</button>
+                <!-- <button type="info">重置</button>
+                <button type="info" @click="APItest">API测试</button> -->
+            </form-item>
+        </form>
+    </div>
+</div>
+
+
+<script type="text/javascript" src="../static/js/jquery-3.6.0.js"></script>
+<script type="text/javascript">
+    $(function(){
+        $('#login_button').on('click', function(){
+            $.post('/login', {'password': $('#pwd_input').val()}, function(result){
+                if(result == 'success'){
+                    window.location = '/';
+                }
+            });
+        });
+    })
+</script>
+
+</body>
+</html>

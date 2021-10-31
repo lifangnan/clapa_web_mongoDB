@@ -306,5 +306,5 @@ def update_Configuration_document(_db, _objectId, _Triger_sources_list, _pv_list
     configuration_collection.update_one({"_id": ObjectId(_objectId)}, {"$set" :configuration_document})
 
 # 直接用python运行flask服务
-# app.run(port='5055')
-app.run(debug=True, port='5055')
+app.run(port='5055')
+# app.run(debug=True, port='5055')

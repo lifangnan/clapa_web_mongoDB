@@ -1,0 +1,132 @@
+<!doctype html>
+<html>
+    <link rel="stylesheet" type="text/css" href="../static/css/backgroud.css">
+<head>
+    <title>clapa Archiver</title>
+</head>
+
+<body>
+    <h1>PV恢复</h1>
+
+    <div class="ExperimentIndexSelect">
+        <a>发次:</a>
+        <input id="ExperimentIndex" type="text" list="ExperimentIndexlist" style="padding:0.5em;border-radius:10px;">
+        <datalist id="ExperimentIndexlist">
+            {% for ExperimentIndex in AllExperimentIndex %}
+            <option>{{ExperimentIndex}}</option>
+            {% endfor %}
+        </datalist>
+    </div>
+    <br>
+
+    设备选择：
+    <input type="checkbox" id="device_allAndNotAll" value="全选/全不选"/>全选 
+    <input type="checkbox" name="device_items" value="andor1" checked='True'/> andor1 
+
+    <br><br>
+    <input type="button" id="getSelectedDevices" value="获取数据"/><br>
+    <br>
+
+    <h3>1. Mongo中相关的PV</h3>
+
+       <table border = "3px">
+            <tr>
+                <th>PV name</th>
+                <th>实验储存值</th>
+                <th>当前值</th>
+                <th><input type="checkbox" id="allAndNotAll" value="全选/全不选" device="andor1"/>全选</th>
+            </tr>
+            <tr>
+                <td width='600px'>13ANDOR1:cam1:SizeX</td>
+                <td width='100px' id='andor1_sizex_mongo' pv="13ANDOR1:cam1:SizeX"> <input type="text" value="N/A" id='andor1_sizex_mongo' pv="13ANDOR1:cam1:SizeX"> </td>
+                <td width='100px' id='andor1_sizex_now' pv="13ANDOR1:cam1:SizeX">N/A</td>
+                <td width='80px'> <input type="checkbox" subtype="pv" name="andor1_items" pv="13ANDOR1:cam1:SizeX"/> </td>
+            </tr>
+            <tr>
+                <td width='600px'>13ANDOR1:cam1:SizeY</td>
+                <td width='100px' id='andor1_sizey_mongo' pv="13ANDOR1:cam1:SizeY"> <input type="text" value="N/A" id='andor1_sizey_mongo' pv="13ANDOR1:cam1:SizeY"> </td>
+                <td width='100px' id='andor1_sizey_now'  pv="13ANDOR1:cam1:SizeY">N/A</td>
+                <td width='80px'> <input type="checkbox" subtype="pv" name="andor1_items" pv="13ANDOR1:cam1:SizeY"/> </td>
+            </tr>
+        </table>
+        
+        <br>
+        <input type="button" id="setDevicesPV" value="获取被选中的id"/><br>
+
+
+<p><a href="/">Back to List</a></p>
+
+
+
+<script type="text/javascript" src="static/js/jquery-3.6.0.js"></script>
+    <script type="application/javascript">
+        $(function(){
+            //实现全选与反选
+            $("#device_allAndNotAll").click(function() { 
+                $("input[name='device_items']").prop("checked",$(this).prop("checked"));  
+            });
+
+            $("#getSelectedDevices").click(function(){
+
+            });
+
+            $("#allAndNotAll").click(function() {
+                var devie_name = $(this).attr("device");
+                $("input[name='"+devie_name+"_items']").prop("checked",$(this).prop("checked"));  
+            });
+
+            // button点击：获取MongoDB中储存的数据和当前PV值
+            $("#getSelectedDevices").click(function(){
+                // 当前选择的发次
+                var ExperimentIndex = $("#ExperimentIndex").val();
+                // console.log(ExperimentIndex);
+                
+                // 判断当前发次是否是一个数字
+                if($.isNumeric(ExperimentIndex) == false){
+                    alert("输入发次不是一个数字");
+                }else{
+                    // 选中的所有设备
+                    var SelectedDevices=[];
+                    $("input[name='device_items']:checked").each(function(){ 
+                        var device_name = $(this).attr("value");
+                        SelectedDevices.push(device_name); 
+                        $.get('/recover_page_get_pv/'+ device_name +'/'+ ExperimentIndex, {}, function(return_data){
+                            var pv_data = return_data[device_name];
+                            $.each(pv_data, function(key, value){
+                                $("input[id='" + key + "']").val(value);
+                            });
+                        });
+                    });
+
+                }
+            });
+            
+            
+            //获取被选中的id
+            $('#setDevicesPV').click(function(){
+                var ids=[];
+                var set_pv = new Object();
+                var pv_name; var pv_number;
+                $("input[type='checkbox'][subtype='pv']:checked").each(function(){ 
+                    pv_name = $(this).attr("pv");
+                    pv_number = $("input[pv='"+ pv_name +"'][type='text']").val();
+                    // console.log(pv_name, pv_number);
+                    set_pv[pv_name] = pv_number;
+                });
+                
+                // console.log(set_pv);
+                $.post('/recover_page_set_pv', set_pv, function(response){
+                    if(response == 'success'){
+                        alert("PV成功设置");
+                    }else{
+                        alert("PV设置过程中似乎出了什么问题");
+                    }
+                });
+            });
+
+
+        });
+  </script>
+
+</body>
+</html>

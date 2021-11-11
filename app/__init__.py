@@ -14,12 +14,14 @@ import zipfile
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
+import re
 from PIL import Image
 from werkzeug.utils import secure_filename 
+from CaChannel import ca, CaChannel, CaChannelException
 
 
 app = Flask(__name__)
+# db_client = pymongo.MongoClient("mongodb://222.29.111.164:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false")
 db_client = pymongo.MongoClient()
 db = db_client.web_test
 db_img = db_client.clapa7
@@ -276,6 +278,81 @@ def get_one_image(source, id, if_hd):
         return redirect(url_for('login'))
  
 
+# 获取恢复PV的页面，并返回当前MongoDB下保存的所有发次
+@app.route("/recover_pv")
+def recover_pv():
+    device_names = db_img.list_collection_names()
+
+    # 集合保存发次，避免重复
+    AllExperimentIndex = set([])
+    for device_name in device_names:
+        all_imgs = db_img[device_name].find({},{ "data": 0})
+        for item in all_imgs:
+            filename = item['filename']
+            # 正则表达式匹配 发次 的int
+            if not isinstance(filename, str):
+                continue
+            searchObj = re.search(r".*(\d+).*", filename)
+            if searchObj:
+                AllExperimentIndex.add(searchObj.group(1))
+    AllExperimentIndex = list(AllExperimentIndex)
+    AllExperimentIndex.sort()
+    # print(AllExperimentIndex)
+    return render_template('recover_pv.html', AllExperimentIndex = AllExperimentIndex)
+
+
+# 获取mongoDB中指定 设备 和 发次 的PV值
+@app.route("/recover_page_get_pv/<device_name>/<ExperimentIndex>")
+def recover_page_get_pv(device_name, ExperimentIndex):
+    dict_device_pv = {'andor1':['13ANDOR1:cam1:SizeX', '13ANDOR1:cam1:SizeY']}
+    andor1_sizex_now = 'N/A'; andor1_sizey_now = 'N/A'
+    try:
+        andor1_sizex_chan = CaChannel('13ANDOR1:cam1:SizeX'); andor1_sizey_chan = CaChannel('13ANDOR1:cam1:SizeY')
+        andor1_sizex_chan.searchw(); andor1_sizey_chan.searchw()
+        andor1_sizex_now = andor1_sizex_chan.getw(); andor1_sizey_now = andor1_sizey_chan.getw()
+    except CaChannelException as e:
+        print(e)
+
+    device_collection = db_img[device_name]
+    # 正则表达式查询
+    selected_imgs = device_collection.find({"filename":{'$regex' : ".*"+ExperimentIndex+".*"}},{ "data": 0})
+    # 多个结果只返回第一个
+    for item in selected_imgs:
+        pv_data = item
+        break
+    andor1_sizex_mongo = pv_data['pixelx']; andor1_sizey_mongo = pv_data['pixely']
+    
+    return_data = {'andor1': { 'andor1_sizex_mongo': andor1_sizex_mongo, 
+                               'andor1_sizey_mongo': andor1_sizey_mongo,  
+                               'andor1_sizex_now': andor1_sizex_now,
+                               'andor1_sizey_now': andor1_sizey_now
+                                }}
+
+    return jsonify(return_data)
+
+
+# 设置PV值
+@app.route('/recover_page_set_pv', methods = ['POST'])
+def recover_page_set_pv():
+    if request.method == 'POST':
+        form = request.values.to_dict()
+        for pv_name in form.keys():
+            pv_number = form[pv_name]
+            if pv_number.isdigit(): # 判断返回值是否为数字
+                pv_number = float(pv_number)
+                try:
+                    temp_chan = CaChannel(pv_name)
+                    temp_chan.searchw()
+                    temp_chan.putw(pv_number)
+                except CaChannelException as e:
+                    print(e)
+                    return 'fail'
+        return 'success'
+    else:
+        return 'fail'
+
+
+
 
 
 ############ 分割线 ###################################################################################################################
@@ -306,5 +383,5 @@ def update_Configuration_document(_db, _objectId, _Triger_sources_list, _pv_list
     configuration_collection.update_one({"_id": ObjectId(_objectId)}, {"$set" :configuration_document})
 
 # 直接用python运行flask服务
-app.run(port='5055')
-# app.run(debug=True, port='5055')
+# app.run(port='5055')
+app.run(debug=True, port='5055')

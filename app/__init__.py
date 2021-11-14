@@ -23,23 +23,25 @@ from CaChannel import ca, CaChannel, CaChannelException
 app = Flask(__name__)
 # db_client = pymongo.MongoClient("mongodb://222.29.111.164:27017/?readPreference=primary&appname=MongoDB%20Compass&ssl=false")
 db_client = pymongo.MongoClient()
-db = db_client.web_test
-db_img = db_client.clapa7
+db = db_client.clapa_test
+db_img = db_client.clapa9
 
 home_app_dir = '/home/laser/mypython/py3_virtual_environment/py3_web_flask/site/app/'
+# home_app_dir = "D:/2021/控制组/web前端相关/site2/服务器端文件/app/"
 
 app.secret_key = 'laserplasma'
 # app.config['PERMANENT_SESSION_LIFETIME'] = 3600
 
 @app.route("/")
 def main_page():
+    session['logged_in'] = True
     if ('logged_in' in session) and session.get('logged_in') == True: # 判断是否登录
         return render_template('index.html', events=db.event.find())
     else:
         return redirect(url_for('login'))
 
 
-
+# 登陆界面
 @app.route('/login', methods = ['POST', 'GET'])
 def login():
     if request.method == 'POST':
@@ -57,7 +59,7 @@ def login():
         return render_template('login.html')
 
 
-
+# 显示MongoDB中对应id的event相关信息，及相关文件信息
 @app.route("/event/<id>")
 def get_event(id):
     if ('logged_in' in session) and session.get('logged_in') == True: # 判断是否登录
@@ -77,7 +79,7 @@ def get_event(id):
         return redirect(url_for('login'))
     
 
-
+# 返回储存在MongoDB的GridFS中的特定id的图片文件
 @app.route("/getImage/<id>")
 def get_image(id):
     if ('logged_in' in session) and session.get('logged_in') == True: # 判断是否登录
@@ -249,6 +251,43 @@ def get_allimages(source):
         return render_template('Allimages_showimage.html', source = source, filenames = filenames)
     else:
         return redirect(url_for('login'))
+
+
+# 打包下载所有实验图片
+@app.route("/downloadAllImages", methods=['GET'])
+def downloadAllImages():
+    if ('logged_in' in session) and session.get('logged_in') == True: # 判断是否登录
+        file_dir = home_app_dir + "/static/experiment_data"
+        if os.path.exists(file_dir) == False:
+            os.mkdir(file_dir)
+        if os.path.exists(file_dir + '/andor1') == False:
+            os.mkdir(file_dir + '/andor1')
+        
+        for img_dict in db_img['andor1'].find():
+            filename = img_dict['filename']
+            pixelx = img_dict['pixelx']
+            pixely = img_dict['pixely']
+            img = pickle.loads(img_dict['data']).reshape(pixelx, pixely)
+            outputImg = Image.fromarray( img, 'L')
+            # 储存代价可能比较大
+            with open(home_app_dir+'/log.txt','a+') as f:
+                f.write(file_dir + '/andor1/'+ filename[:-4] + '.jpeg')
+            outputImg.save(file_dir + '/andor1/'+ filename[:-4] + '.jpeg', 'JPEG', quality = 100, subsampling = 0)
+
+        # 压缩从服务器端临时保存的文件
+        with zipfile.ZipFile(home_app_dir + '/static/temporary_file.zip', mode='w', compression=zipfile.ZIP_DEFLATED) as zf:
+            for ev_name in os.listdir(file_dir):
+                if len( os.listdir(os.path.join(file_dir, ev_name)) ) == 0:
+                    zf.write(os.path.join(file_dir, ev_name), arcname = ev_name)
+                for file_name in os.listdir(os.path.join(file_dir, ev_name)):
+                    zf.write(os.path.join(file_dir, ev_name, file_name), arcname = os.path.join(ev_name, file_name))
+
+        # os.remove(home_app_dir + '/static/experiment_data.zip')
+        shutil.rmtree(home_app_dir + '/static/experiment_data') # 递归删除非空文件夹
+        return send_file(open(home_app_dir+'/static/temporary_file.zip', 'rb'), mimetype = 'application/zip', as_attachment=True, attachment_filename='experiment_images.zip')
+
+    else:
+        return redirect(url_for('login'))
     
 
 @app.route("/get_binary_images/<source>/<id>/<if_hd>")
@@ -382,6 +421,8 @@ def update_Configuration_document(_db, _objectId, _Triger_sources_list, _pv_list
     # 根据objectId找到文档并更新
     configuration_collection.update_one({"_id": ObjectId(_objectId)}, {"$set" :configuration_document})
 
+
+
 # 直接用python运行flask服务
-# app.run(port='5055')
-app.run(debug=True, port='5055')
+app.run(port='5055')
+# app.run(debug=True, port='5055')

@@ -16,6 +16,7 @@
         {% endfor %}
     </ul>
 
+    <button id='downloadAllImages' style="width:200px; height:35px; font-size:large;">下载实验图片</button>
 
     <p><a href="/">Back to List</a></p>
 
@@ -23,6 +24,17 @@
 
 
     <script type="text/javascript" src="../static/js/jquery-3.6.0.js"></script>
+    <script type="text/javascript">
+        $(function(){
+            $('#downloadAllImages').on('click', function(){
+                // $.get('/downloadFiles', {}, function(data){
+                //     // console.log(data);
+                // })
+                window.open('/downloadAllImages');
+
+            });
+        })
+    </script>
 
 </body>
 

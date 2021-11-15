@@ -331,7 +331,7 @@ def recover_pv():
             # 正则表达式匹配 发次 的int
             if not isinstance(filename, str):
                 continue
-            searchObj = re.search(r".*(\d+).*", filename)
+            searchObj = re.search(r".*?(\d+).*", filename)
             if searchObj:
                 AllExperimentIndex.add(searchObj.group(1))
     AllExperimentIndex = list(AllExperimentIndex)
